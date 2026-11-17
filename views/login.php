@@ -1,4 +1,4 @@
-//* info: login card
+<!--//* info: login card-->
 
 <div class="card">
   <h3>Beheer</h3>

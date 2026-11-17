@@ -1,4 +1,4 @@
-//* info: pagina voor de gasten
+<!--//* info: pagina voor de gasten -->
 
 <div class="grid">
 <?php foreach(FACILITIES as $id=>$f):
