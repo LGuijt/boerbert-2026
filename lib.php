@@ -1,16 +1,17 @@
 <?php
-// ===== CONFIG (aanpassen!) =====
-const BERT_MAIL   = 'bert@example.com';     // e-mailadres van Bert
-const FROM_MAIL   = 'camping@example.com';  // afzender (liefst een adres op jullie eigen domein)
-const ADMIN_KEY   = 'verander-mij';         // wachtwoord beheer (Bert)
-const STAFF_KEY   = 'verander-mij-personeel'; // wachtwoord beheer (personeel)
-const SCANNER_KEY = 'verander-mij-ook';     // sleutel voor de pasjeslezers
-const LAT = 52.09; const LON = 5.12;        // locatie camping (voor zonsondergang)
+//* info: CONFIG 
+//todo (aanpassen!)
+const BERT_MAIL   = 'bert@example.com';     //* info: e-mailadres van Bert
+const FROM_MAIL   = 'camping@example.com';  //* info: afzender (liefst een adres op jullie eigen domein)
+const ADMIN_KEY   = 'verander-mij';         //* info wachtwoord beheer (Bert)
+const STAFF_KEY   = 'verander-mij-personeel'; //* info: wachtwoord beheer (personeel)
+const SCANNER_KEY = 'verander-mij-ook';     //* info: sleutel voor de pasjeslezers
+const LAT = 52.09; const LON = 5.12;        //* info: locatie camping (voor zonsondergang)
 // ===============================
 date_default_timezone_set('Europe/Amsterdam');
 
-// cap = max tegelijk (0/leeg = geen limiet) | u = groep losse units, cap = aantal werkende units
-// man = Bert kan open/dicht zetten | sun = dicht na zonsondergang | always = altijd open
+//* info: cap = max tegelijk (0/leeg = geen limiet) | u = groep losse units, cap = aantal werkende units
+//* info: man = Bert kan open/dicht zetten | sun = dicht na zonsondergang | always = altijd open
 const FACILITIES = [
   'douche'  => ['n'=>'Douches',                 'i'=>'🚿', 'u'=>'d'],
   'wc'      => ['n'=>'Toiletten',               'i'=>'🚻', 'u'=>'w'],
@@ -19,17 +20,17 @@ const FACILITIES = [
   'zwem'    => ['n'=>'Buitenzwembad',           'i'=>'🏊', 'sun'=>1],
   'kantine' => ['n'=>'Kantine (oude melkstal)', 'i'=>'🍺', 'man'=>1],
 ];
-// Losse units: sleutel = letter + nummer (d0..d11, w0..w13, m0..m5)
+//* info: Losse units: sleutel = letter + nummer (d0..d11, w0..w13, m0..m5)
 const UNITS = ['d'=>['n'=>12,'name'=>'Douche'], 'w'=>['n'=>14,'name'=>'Toilet'], 'm'=>['n'=>6,'name'=>'Wasmachine']];
 
-/* ---------- opslag ---------- */
+//* info: opslag 
 function state_open(){
   global $S,$fh,$poolOpen,$sunset;
   $dir = __DIR__.'/data';
   if(!is_dir($dir)){ mkdir($dir,0750); file_put_contents("$dir/.htaccess","Require all denied\n"); }
   $fh = fopen("$dir/state.json",'c+'); flock($fh,LOCK_EX);
   $S = (json_decode(stream_get_contents($fh),true) ?: []) + ['in'=>[],'vis'=>[],'def'=>[],'u'=>[],'open'=>['stal'=>1,'kantine'=>1],'meld'=>[],'hok'=>[],'clean'=>[],'rl'=>[]];
-  foreach(UNITS as $g=>$u){ // oude 'mach' wordt overgenomen
+  foreach(UNITS as $g=>$u){ //* info: oude 'mach' wordt overgenomen
     $old = $S['u'][$g] ?? ($g=='m' ? ($S['mach'] ?? []) : []);
     $S['u'][$g] = array_pad(array_slice($old,0,$u['n']),$u['n'],1);
   }
@@ -40,10 +41,10 @@ function state_open(){
 }
 function save(){ global $fh,$S; ftruncate($fh,0); rewind($fh); fwrite($fh,json_encode($S)); }
 
-/* ---------- helpers ---------- */
+//* info: helpers 
 function h($s){ return htmlspecialchars((string)$s,ENT_QUOTES); }
 function short_name($id){ return explode(' (',FACILITIES[$id]['n'])[0]; }
-// Schoonmaakhok: items die nog buiten het hok zijn (een 'terug' haalt de oudste 'uit' met hetzelfde middel weg, liefst van dezelfde persoon)
+//* info Schoonmaakhok: items die nog buiten het hok zijn (een 'terug' haalt de oudste 'uit' met hetzelfde middel weg, liefst van dezelfde persoon)
 function hok_open(){
   global $S; $open=[];
   foreach($S['hok'] as $x){
@@ -60,7 +61,7 @@ function working($g){ global $S; return array_sum($S['u'][$g]); }
 function capacity($id){ $f=FACILITIES[$id]; return isset($f['u']) ? working($f['u']) : ($f['cap'] ?? 0); }
 function is_closed($id){ global $S; return !empty(FACILITIES[$id]['man']) && empty($S['open'][$id]); }
 
-// [tekst, kleurklasse, subtekst]
+//* info: [tekst, kleurklasse, subtekst]
 function status($id){
   global $S,$poolOpen; $f=FACILITIES[$id]; $o=count($S['in'][$id] ?? []); $c=capacity($id);
   if(!empty($S['def'][$id]))        return ['Defect','bad','Het personeel is op de hoogte gesteld'];
@@ -72,12 +73,12 @@ function status($id){
   return ['Open','ok',"$o aanwezig".(!empty($f['sun']) ? ' (geen limiet)' : '')];
 }
 
-/* ---------- views includen ---------- */
+//* info: views includen 
 function units($g,$mode){ global $S; include __DIR__.'/views/units.php'; }
 function unit_card($title,$g,$mode){ global $S; include __DIR__.'/views/unit_card.php'; }
 
-/* ---------- acties ---------- */
-// $who: 'admin' (Bert) | 'staff' (personeel) | 'scanner' | 'guest'. Geeft null bij succes, anders [melding, httpcode]
+//* info: acties
+//* info:  $who: 'admin' (Bert) | 'staff' (personeel) | 'scanner' | 'guest'. Geeft null bij succes, anders [melding, httpcode]
 function act($a,$b,$who){
   global $S,$poolOpen;
   $admin = $who=='admin'; $staff = $admin || $who=='staff'; $scanner = $admin || $who=='scanner'; $no = ['Geen toegang',401];

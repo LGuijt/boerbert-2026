@@ -2,11 +2,11 @@
 require __DIR__.'/lib.php';
 session_start();
 state_open();
-$role = $_SESSION['role'] ?? ''; // '' | 'staff' | 'admin'
+$role = $_SESSION['role'] ?? ''; //*info: '' | 'staff' | 'admin'
 
 function go($v=''){ header('Location: index.php'.($v ? "?v=$v" : '')); exit; }
 
-/* ---------- formulieren verwerken (Post/Redirect/Get) ---------- */
+//* info: formulieren verwerken (Post/Redirect/Get) 
 if($_SERVER['REQUEST_METHOD']=='POST'){
   if(isset($_POST['pw'])){
     $nieuw = hash_equals(ADMIN_KEY,$_POST['pw']) ? 'admin' : (hash_equals(STAFF_KEY,$_POST['pw']) ? 'staff' : '');
@@ -36,7 +36,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   go($a=='report' ? '' : 'b');
 }
 
-/* ---------- pagina ---------- */
+//* info:  pagina
 $flash = $_SESSION['flash'] ?? ''; unset($_SESSION['flash']);
 $melden = $_GET['melden'] ?? '';
 if($melden!=='' && !valid_key($melden)) $melden='';

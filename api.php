@@ -1,5 +1,5 @@
 <?php
-// Alleen voor de pasjeslezers: POST api.php met header X-Key en JSON {"f":"douche","dir":"in|out","card":"123"}
+//* info: "regelt" de pasjes
 require __DIR__.'/lib.php';
 header('Content-Type: application/json');
 state_open();

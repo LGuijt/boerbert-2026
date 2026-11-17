@@ -1,3 +1,4 @@
+//* info: voor het schoonmaakhok
 <?php
 $buiten = hok_open();
 $terug  = array_reverse(array_filter($S['hok'],fn($x)=>$x['a']=='terug'));
@@ -6,6 +7,7 @@ $terug  = array_reverse(array_filter($S['hok'],fn($x)=>$x['a']=='terug'));
 <div class="card">
   <?php if($buiten): ?>
     <div class="mut">Nog buiten het hok:</div>
+    //* info: meld alles wat nog uit het hok is, zover we weten
     <?php foreach($buiten as $e): ?>
       <div class="row"><span><b><?=h($e['m'])?></b> · <?=h($e['w'])?> · sinds <?=h($e['t'])?></span>
         <button class="btn p" name="x" value="hok:terug:<?=base64_encode(json_encode([$e['w'],$e['m']]))?>">Teruggebracht</button></div>
