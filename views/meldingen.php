@@ -1,4 +1,4 @@
-//* info: defect meldingen
+<!--//* info: defect meldingen-->
 <?php if($open): ?>
   <div class="alert"><b>🔔 <?=count($open)?> open melding(en)</b>
     <?php foreach($open as $m): ?>

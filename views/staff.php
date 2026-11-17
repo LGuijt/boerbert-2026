@@ -1,4 +1,4 @@
-//* inf0: pagina voor personeel dat niet Bert is
+<!--//* inf0: pagina voor personeel dat niet Bert is-->
 <form method="post">
 <button name="x" value="noop" hidden></button>
 

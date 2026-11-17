@@ -1,4 +1,4 @@
-//* info: card voor het melden van defecten
+<!--//* info: card voor het melden van defecten-->
 
 <div class="card">
   <h3>⚠️ Melden dat <?=h(label($melden))?> niet werkt?</h3>

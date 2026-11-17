@@ -1,4 +1,4 @@
-//* info: voor het schoonmaakhok
+<!--//* info: voor het schoonmaakhok-->
 <?php
 $buiten = hok_open();
 $terug  = array_reverse(array_filter($S['hok'],fn($x)=>$x['a']=='terug'));

@@ -1,6 +1,6 @@
-//* info: card voor de schoonmaak
+<!--//* info: card voor de schoonmaak-->
 
-//todo: moet ook nog iets van voorspellend vermogen/algmene gemiddelden hebben
+<!--//todo: moet ook nog iets van voorspellend vermogen/algmene gemiddelden hebben-->
 
 <?php $mx = max(1, ...array_map(fn($id)=>$S['vis'][$id] ?? 0, array_keys(FACILITIES))); ?>
 <h2>Drukte voor schoonmakers</h2>
