@@ -1,6 +1,6 @@
-<?php // Personeel: defecten zien/melden/oplossen, schoonmaak en schoonmaakhok ?>
+//* inf0: pagina voor personeel dat niet Bert is
 <form method="post">
-<button name="x" value="noop" hidden></button><?php // Enter in een tekstveld mag geen echte knop afvuren ?>
+<button name="x" value="noop" hidden></button>
 
 <?php include __DIR__.'/meldingen.php' ?>
 

@@ -1,4 +1,4 @@
-<?php // vars: $open (open defectmeldingen). Hoort binnen een <form method="post"> ?>
+//* info: defect meldingen
 <?php if($open): ?>
   <div class="alert"><b>🔔 <?=count($open)?> open melding(en)</b>
     <?php foreach($open as $m): ?>

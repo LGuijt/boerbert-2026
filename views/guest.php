@@ -1,3 +1,5 @@
+//* info: pagina voor de gasten
+
 <div class="grid">
 <?php foreach(FACILITIES as $id=>$f):
   [$tekst,$kleur,$sub] = status($id); $o=count($S['in'][$id] ?? []); $cap=capacity($id); ?>

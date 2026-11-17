@@ -1,3 +1,5 @@
+//* templates voor de facilities cards
+
 <?php // vars: $title, $g, $mode
 $w=working($g); $n=count($S['u'][$g]); ?>
 <div class="card">
