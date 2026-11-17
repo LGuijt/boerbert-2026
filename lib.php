@@ -83,24 +83,89 @@ function act($a,$b,$who){
   global $S,$poolOpen;
   $admin = $who=='admin'; $staff = $admin || $who=='staff'; $scanner = $admin || $who=='scanner'; $no = ['Geen toegang',401];
 
-  if($a=='scan'){
-    if(!$scanner) return $no;
-    $f=$b['f']??''; $card=trim($b['card']??'');
-    if(!isset(FACILITIES[$f]) || $card==='') return ['Ongeldig',400];
-    $in = $S['in'][$f] ?? [];
-    if(($b['dir']??'')=='out') $in = array_values(array_diff($in,[$card]));
-    else {
-      $c = capacity($f);
-      if(!empty($S['def'][$f]) || (isset(FACILITIES[$f]['u']) && !$c)) return ['Defect',409];
-      if(is_closed($f)) return ['Gesloten',409];
-      if($f=='zwem' && !$poolOpen) return ['Gesloten (zon onder)',409];
-      if(!in_array($card,$in)){
-        if($c && count($in)>=$c) return ['Vol',409]; // wie het eerst komt...
-        $in[]=$card; $S['vis'][$f]=($S['vis'][$f]??0)+1;
+
+  if ($a == 'scan') {
+      if (!$scanner) return $no;
+
+      $f = $b['f'] ?? '';
+      $card = strtoupper(preg_replace(
+          '/[^A-Fa-f0-9]/',
+          '',
+          (string)($b['card'] ?? '')
+      ));
+
+      if (!isset(FACILITIES[$f]) ||
+          !preg_match('/^[A-F0-9]{8,20}$/', $card)) {
+          return ['Ongeldige scan', 400];
       }
-    }
-    $S['in'][$f]=$in; return null;
+
+      // Voorlopige testkaarten.
+      // Later vervangen door gastenregistratie.
+      $allowedCards = [
+          'A20E9451',
+          '92237F51'
+      ];
+
+      if (!in_array($card, $allowedCards, true)) {
+          return ['Onbekende kaart', 403];
+      }
+
+      $in = $S['in'][$f] ?? [];
+
+      // Voorkom direct dubbel scannen.
+      $now = microtime(true);
+      $last = $S['lastscan'][$f][$card] ?? 0;
+
+      if ($now - $last < 3) {
+          $S['scanresult'] = [
+              'action' => 'ignored',
+              'occupancy' => count($in)
+          ];
+          return null;
+      }
+
+      // Is de gast al binnen?
+      if (in_array($card, $in, true)) {
+          $in = array_values(array_diff($in, [$card]));
+          $action = 'out';
+      } else {
+          // Controleer de faciliteit.
+          $c = capacity($f);
+
+          if (!empty($S['def'][$f]) ||
+              (isset(FACILITIES[$f]['u']) && !$c)) {
+              return ['Defect', 409];
+          }
+
+          if (is_closed($f)) {
+              return ['Gesloten', 409];
+          }
+
+          if ($f == 'zwem' && !$poolOpen) {
+              return ['Zwembad gesloten', 409];
+          }
+
+          if ($c && count($in) >= $c) {
+              return ['Faciliteit vol', 409];
+          }
+
+          $in[] = $card;
+          $action = 'in';
+
+          $S['vis'][$f] = ($S['vis'][$f] ?? 0) + 1;
+      }
+
+      $S['in'][$f] = $in;
+      $S['lastscan'][$f][$card] = $now;
+
+      $S['scanresult'] = [
+          'action' => $action,
+          'occupancy' => count($in)
+      ];
+
+      return null;
   }
+
 
   if($a=='report' || $a=='defect'){
     $k=$b['key']??''; if(!valid_key($k)) return ['Ongeldig',400];
