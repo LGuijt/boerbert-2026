@@ -16,6 +16,14 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   }
   [$a,$p1,$p2] = array_pad(explode(':',$_POST['x'] ?? ''),3,'');
   if($a=='logout'){ unset($_SESSION['role']); go(); }
+  $poolDate = parse_pool_date_input($_POST['pool_date'] ?? '');
+  if($a=='pool_schedule_load'){
+    if(!$poolDate || $poolDate<date('Y-m-d')){
+      $_SESSION['flash']='Vul een datum in als dd/mm/jjjj, vandaag of later';
+      go('b');
+    }
+    go('b&pool_date='.rawurlencode($poolDate));
+  }
   if(isset($_POST['card'])) $_SESSION['card']=$_POST['card'];
   $hokKnop = $p2!=='' ? (array) json_decode(base64_decode($p2),true) : null; // [wie, middel] van een Teruggebracht-knop
   $b = match($a){
@@ -24,6 +32,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
     'report'  => ['key'=>$p1],
     'open'    => ['f'=>$p1,'on'=>$p2=='on'],
     'cleaned' => ['f'=>$p1],
+    'pool_schedule' => ['date'=>$poolDate ?: '', 'open'=>$_POST['pool_open'] ?? '', 'close'=>$_POST['pool_close'] ?? ''],
+    'pool_schedule_clear' => ['date'=>$poolDate ?: ''],
     // hok:uit / hok:terug lezen de invulvelden; hok:terug:<b64> komt van de knop bij een openstaand item
     'hok'     => ['a'=>$p1,'w'=>$hokKnop[0] ?? $_POST['hw'] ?? '','m'=>$hokKnop[1] ?? $_POST['hm'] ?? ''],
     default   => null,
@@ -31,9 +41,18 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
   if($b!==null){
     $err = act($a,$b,$role ?: 'guest');
     if($err) $_SESSION['flash']=$err[0];
-    else { save(); if($a=='report') $_SESSION['flash']='Bedankt! Het personeel is gewaarschuwd.'; }
+    else {
+      save();
+      if($a=='report') $_SESSION['flash']='Bedankt! Het personeel is gewaarschuwd.';
+      elseif($a=='pool_schedule') $_SESSION['flash']='De aangepaste zwemtijden zijn opgeslagen.';
+      elseif($a=='pool_schedule_clear') $_SESSION['flash']='De aangepaste zwemtijden zijn verwijderd.';
+    }
   }
-  go($a=='report' ? '' : 'b');
+  $destination = 'b';
+  if(in_array($a,['pool_schedule','pool_schedule_clear'],true) && $poolDate){
+    $destination .= '&pool_date='.rawurlencode($poolDate);
+  }
+  go($a=='report' ? '' : $destination);
 }
 
 //* info:  pagina
@@ -41,6 +60,10 @@ $flash = $_SESSION['flash'] ?? ''; unset($_SESSION['flash']);
 $melden = $_GET['melden'] ?? '';
 if($melden!=='' && !valid_key($melden)) $melden='';
 $view = ($_GET['v'] ?? '')=='b' ? 'b' : 'g';
+$poolEditDate = $_GET['pool_date'] ?? date('Y-m-d');
+if(!valid_pool_date($poolEditDate) || $poolEditDate<date('Y-m-d')) $poolEditDate=date('Y-m-d');
+$poolEditTimes = $S['pool_schedule'][$poolEditDate] ?? pool_solar_times($poolEditDate);
+$poolEditIsScheduled = isset($S['pool_schedule'][$poolEditDate]);
 $open = array_filter($S['meld'],fn($m)=>!$m['done']);
 $dag  = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'][date('w')];
 ?><!doctype html>
@@ -48,7 +71,7 @@ $dag  = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <?php if($view=='g' && !$melden): ?><meta http-equiv="refresh" content="10"><?php endif ?>
 <title>Boerencamping – Faciliteiten</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=<?=filemtime(__DIR__.'/style.css')?>">
 </head><body>
 <header><h1>🌾 Boerencamping – Faciliteiten</h1><p><?=$dag?> <?=date('H:i')?></p></header>
 <nav>

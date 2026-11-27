@@ -122,6 +122,211 @@ h2 {
   color: var(--mut);
   font: 0.88rem system-ui;
 }
+.pool-times {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  font: 0.88rem system-ui;
+}
+.pool-times strong {
+  color: var(--ok);
+  white-space: nowrap;
+}
+.pool-closed {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--bad);
+  border-left-width: 5px;
+  border-radius: 10px;
+  background: var(--bg);
+  font: 0.92rem system-ui;
+}
+.pool-closed > strong {
+  color: var(--bad);
+}
+.pool-closed p {
+  margin: 6px 0 0;
+  color: var(--mut);
+}
+.pool-closed p strong {
+  color: var(--ink);
+}
+.pool-schedule-notice {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-left-width: 5px;
+  border-radius: 10px;
+  background: var(--bg);
+  font: 0.9rem system-ui;
+}
+.pool-schedule-notice strong {
+  color: var(--warn);
+}
+.pool-schedule {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  font: 0.9rem system-ui;
+}
+.pool-schedule label {
+  display: grid;
+  gap: 5px;
+}
+.pool-schedule__times {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.pool-schedule .alert {
+  margin: 0;
+}
+.pool-clock {
+  position: relative;
+  width: 200px;
+  aspect-ratio: 1;
+  margin: 18px auto 10px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--sunrise-angle),
+    var(--ok) 0deg var(--open-angle),
+    var(--bad) var(--open-angle) 360deg
+  );
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--line);
+}
+.pool-clock::before {
+  position: absolute;
+  z-index: 0;
+  inset: 16px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+  content: "";
+}
+.pool-clock__ticks {
+  position: absolute;
+  z-index: 1;
+  inset: 16px;
+  border-radius: 50%;
+}
+.pool-clock__tick {
+  position: absolute;
+  top: 4px;
+  left: calc(50% - 0.5px);
+  width: 1px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--mut);
+  transform: rotate(var(--tick-angle));
+  transform-origin: 50% 84px;
+}
+.pool-clock__tick--hour {
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 12px;
+  background: var(--ink);
+}
+.pool-clock__hand {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  border-radius: 99px;
+  background: var(--ink);
+  transform-origin: 50% 100%;
+}
+.pool-clock__hand--hour {
+  z-index: 3;
+  top: 28%;
+  width: 6px;
+  height: 22%;
+  margin-left: -3px;
+  background: var(--warn);
+  box-shadow: 0 0 0 1px var(--card);
+  transform: rotate(var(--now-angle));
+}
+.pool-clock__hand--minute {
+  top: 16%;
+  width: 3px;
+  height: 34%;
+  margin-left: -1.5px;
+  transform: rotate(var(--minute-angle));
+}
+.pool-clock__hand--seconds {
+  z-index: 4;
+  top: 11%;
+  width: 2px;
+  height: 39%;
+  margin-left: -1px;
+  background: #ff3030;
+  box-shadow: 0 0 0 1px var(--card);
+  transform: rotate(var(--seconds-angle));
+  animation: pool-clock-seconds 60s linear infinite;
+}
+@keyframes pool-clock-seconds {
+  from { transform: rotate(var(--seconds-angle)); }
+  to { transform: rotate(calc(var(--seconds-angle) + 360deg)); }
+}
+.pool-clock__pin {
+  position: absolute;
+  z-index: 5;
+  top: calc(50% - 4px);
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.pool-clock__label {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  color: var(--mut);
+  width: 20px;
+  text-align: center;
+  font: 600 0.75rem system-ui;
+  transform: translate(-50%, -50%);
+}
+.pool-clock__label--1 { top: 23%; left: 65%; }
+.pool-clock__label--2 { top: 35%; left: 77%; }
+.pool-clock__label--3 { top: 50%; left: 81%; }
+.pool-clock__label--4 { top: 65%; left: 77%; }
+.pool-clock__label--5 { top: 77%; left: 65%; }
+.pool-clock__label--6 { top: 81%; left: 50%; }
+.pool-clock__label--7 { top: 77%; left: 35%; }
+.pool-clock__label--8 { top: 65%; left: 23%; }
+.pool-clock__label--9 { top: 50%; left: 19%; }
+.pool-clock__label--10 { top: 35%; left: 23%; }
+.pool-clock__label--11 { top: 23%; left: 35%; }
+.pool-clock__label--12 { top: 19%; left: 50%; }
+.pool-clock-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: var(--mut);
+  font: 0.82rem system-ui;
+}
+.pool-clock-legend span::before {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+  border-radius: 50%;
+  content: "";
+}
+.pool-clock-legend__open::before {
+  background: var(--ok);
+}
+.pool-clock-legend__closed::before {
+  background: var(--bad);
+}
 .bar {
   height: 8px;
   background: var(--line);

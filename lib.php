@@ -25,7 +25,7 @@ const UNITS = ['d'=>['n'=>12,'name'=>'Douche'], 'w'=>['n'=>14,'name'=>'Toilet'],
 
 //* info: opslag 
 function state_open(){
-  global $S,$fh,$poolOpen,$sunset;
+  global $S,$fh,$poolOpen,$sunrise,$sunriseTime,$sunset,$sunsetTime,$poolOpensAt,$poolOpensDay,$poolScheduleChanged;
   $dir = __DIR__.'/data';
   if(!is_dir($dir)){ mkdir($dir,0750); file_put_contents("$dir/.htaccess","Require all denied\n"); }
   $fh = fopen("$dir/state.json",'c+'); flock($fh,LOCK_EX);
@@ -35,14 +35,51 @@ function state_open(){
     $S['u'][$g] = array_pad(array_slice($old,0,$u['n']),$u['n'],1);
   }
   unset($S['mach']);
-  $sun = date_sun_info(time(),LAT,LON)['sunset'] ?? strtotime('20:30');
-  $poolOpen = time() < $sun; $sunset = date('H:i',$sun);
-  if(!$poolOpen) $S['in']['zwem'] = []; // zon onder: zwembad leeg
+  $today = date('Y-m-d');
+  $times = pool_solar_times($today);
+  $schedule = $S['pool_schedule'][$today] ?? null;
+  $poolScheduleChanged = is_array($schedule) && isset($schedule['open'],$schedule['close']);
+  if($poolScheduleChanged) $times = $schedule;
+  $rise = strtotime($today.' '.$times['open']);
+  $sun = strtotime($today.' '.$times['close']);
+  $now = time();
+  $poolOpen = $now >= $rise && $now < $sun;
+  $sunriseTime = $rise; $sunsetTime = $sun;
+  $sunrise = date('H:i',$rise); $sunset = date('H:i',$sun);
+  if(!$poolOpen){
+    if($now < $rise){
+      $poolOpensAt = $sunrise;
+      $poolOpensDay = 'vandaag';
+    } else {
+      $tomorrow = date('Y-m-d',strtotime('tomorrow'));
+      $nextSchedule = $S['pool_schedule'][$tomorrow] ?? pool_solar_times($tomorrow);
+      $poolOpensAt = $nextSchedule['open'];
+      $poolOpensDay = 'morgen';
+    }
+  }
+  if(!$poolOpen) $S['in']['zwem'] = []; // buiten openingstijden: zwembad leeg
 }
 function save(){ global $fh,$S; ftruncate($fh,0); rewind($fh); fwrite($fh,json_encode($S)); }
 
 //* info: helpers 
 function h($s){ return htmlspecialchars((string)$s,ENT_QUOTES); }
+function valid_pool_date($date){
+  if(!is_string($date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/',$date)) return false;
+  $parsed = DateTimeImmutable::createFromFormat('!Y-m-d',$date);
+  return $parsed && $parsed->format('Y-m-d')===$date;
+}
+function parse_pool_date_input($date){
+  if(!is_string($date) || !preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/',$date,$parts)) return false;
+  $iso = $parts[3].'-'.$parts[2].'-'.$parts[1];
+  return valid_pool_date($iso) ? $iso : false;
+}
+function pool_solar_times($date){
+  $solar = date_sun_info(strtotime($date.' 12:00:00'),LAT,LON);
+  return [
+    'open'=>date('H:i',$solar['sunrise'] ?: strtotime($date.' 06:00')),
+    'close'=>date('H:i',$solar['sunset'] ?: strtotime($date.' 20:30')),
+  ];
+}
 function short_name($id){ return explode(' (',FACILITIES[$id]['n'])[0]; }
 //* info Schoonmaakhok: items die nog buiten het hok zijn (een 'terug' haalt de oudste 'uit' met hetzelfde middel weg, liefst van dezelfde persoon)
 function hok_open(){
@@ -63,10 +100,10 @@ function is_closed($id){ global $S; return !empty(FACILITIES[$id]['man']) && emp
 
 //* info: [tekst, kleurklasse, subtekst]
 function status($id){
-  global $S,$poolOpen; $f=FACILITIES[$id]; $o=count($S['in'][$id] ?? []); $c=capacity($id);
+  global $S,$poolOpen,$sunriseTime,$poolScheduleChanged; $f=FACILITIES[$id]; $o=count($S['in'][$id] ?? []); $c=capacity($id);
   if(!empty($S['def'][$id]))        return ['Defect','bad','Het personeel is op de hoogte gesteld'];
   if(isset($f['u']) && !$c)         return ['Defect','bad','Alles defect – het personeel is op de hoogte gesteld'];
-  if(!empty($f['sun']) && !$poolOpen) return ['Gesloten','off','Zon onder – zwembad leeg'];
+  if(!empty($f['sun']) && !$poolOpen) return ['Gesloten','off',$poolScheduleChanged ? 'Buiten aangepaste zwemtijden – zwembad leeg' : (time() < $sunriseTime ? 'Zon nog niet op – zwembad leeg' : 'Zon onder – zwembad leeg')];
   if(is_closed($id))                return ['Gesloten','off',''];
   if($c && $o>=$c)                  return ['Vol','warn',"$o van $c bezet"];
   if($c)                            return ['Beschikbaar','ok',"$o van $c bezet"];
@@ -83,6 +120,21 @@ function act($a,$b,$who){
   global $S,$poolOpen;
   $admin = $who=='admin'; $staff = $admin || $who=='staff'; $scanner = $admin || $who=='scanner'; $no = ['Geen toegang',401];
 
+  if($a=='pool_schedule' || $a=='pool_schedule_clear'){
+    if(!$admin) return $no;
+    $date = $b['date'] ?? '';
+    if(!valid_pool_date($date) || $date<date('Y-m-d')) return ['Kies vandaag of een toekomstige datum',400];
+    if($a=='pool_schedule_clear'){
+      unset($S['pool_schedule'][$date]);
+      return null;
+    }
+    $open = $b['open'] ?? ''; $close = $b['close'] ?? '';
+    if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$open) ||
+       !preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$close) ||
+       $open >= $close) return ['Vul geldige tijden in; de openingstijd moet voor de sluitingstijd liggen',400];
+    $S['pool_schedule'][$date] = ['open'=>$open,'close'=>$close];
+    return null;
+  }
 
   if ($a == 'scan') {
       if (!$scanner) return $no;

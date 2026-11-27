@@ -28,7 +28,29 @@
 </div>
 
 <h2>Zwembad</h2>
-<div class="card mut">Zon onder vandaag om <?=$sunset?> (automatisch berekend) – het zwembad is nu <?=$poolOpen ? 'open' : 'gesloten en leeg'?></div>
+<div class="card">
+  <div class="mut">Vandaag: <?=h($sunrise)?> – <?=h($sunset)?><?=$poolScheduleChanged ? ' (aangepast)' : ' (automatisch berekend)'?> – het zwembad is nu <?=$poolOpen ? 'open' : 'gesloten en leeg'?></div>
+  <div class="pool-schedule">
+    <label>Datum
+      <input type="text" name="pool_date" value="<?=date('d/m/Y',strtotime($poolEditDate))?>" placeholder="dd/mm/jjjj" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" title="Gebruik dd/mm/jjjj" required>
+    </label>
+    <button class="btn" name="x" value="pool_schedule_load">Datum laden</button>
+    <?php if($poolEditIsScheduled): ?><div class="alert fine">Voor deze datum staan aangepaste tijden ingesteld.</div>
+    <?php else: ?><div class="mut">Deze datum gebruikt standaard de berekende zonsopkomst en zonsondergang.</div><?php endif ?>
+    <div class="pool-schedule__times">
+      <label>Open vanaf
+        <input type="time" name="pool_open" value="<?=h($poolEditTimes['open'])?>" required>
+      </label>
+      <label>Sluiten om
+        <input type="time" name="pool_close" value="<?=h($poolEditTimes['close'])?>" required>
+      </label>
+    </div>
+    <div>
+      <button class="btn p" name="x" value="pool_schedule">Tijden opslaan</button>
+      <?php if($poolEditIsScheduled): ?><button class="btn" name="x" value="pool_schedule_clear">Terug naar zonsopkomst/-ondergang</button><?php endif ?>
+    </div>
+  </div>
+</div>
 
 <?php include __DIR__.'/schoonmaak.php' ?>
 <?php include __DIR__.'/hok.php' ?>
